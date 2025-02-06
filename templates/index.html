@@ -313,11 +313,11 @@
             
             let currentPhraseIndex = 0;
             
-            // Меняем фразы каждые 2 секунды
+            // Меняем фразы каждые 4 секунды
             return setInterval(() => {
                 currentPhraseIndex = (currentPhraseIndex + 1) % generatingPhrases.length;
                 generatingDiv.innerHTML = `<p>${generatingPhrases[currentPhraseIndex]}</p>`;
-            }, 2000);
+            }, 4000);
         }
 
         function hideGeneratingState() {
