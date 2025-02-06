@@ -240,11 +240,18 @@
             currentEditingMeal = meal;
             currentEditingElement = mealElement;
 
-            title.textContent = meal.name;
+            // Определяем тип блюда (будни/выходные) по индексу
+            const mealIndex = parseInt(mealElement?.getAttribute('data-index') ?? '0');
+            const isWeekend = mealIndex >= 3;
+            const daysCount = isWeekend ? 3 : 4; // 3 дня для выходных, 4 для будних
+            const portionsCount = daysCount * 2; // умножаем на DEFAULT_PEOPLE_COUNT (2)
+            
+            title.textContent = `${meal.name} (${portionsCount} порций на ${daysCount} дня)`;
             
             ingredientsGrid.innerHTML = '';
             instructionsList.innerHTML = '';
 
+            // Умножаем количество ингредиентов на количество порций
             meal.ingredients.forEach(ing => {
                 const [name, amount] = ing.split(' - ').map(part => part.trim());
                 const nameDiv = document.createElement('div');
@@ -256,7 +263,7 @@
                 // Извлекаем число и единицу измерения
                 const match = amount.match(/^([\d.]+)(.*)$/);
                 if (match) {
-                    const number = parseFloat(match[1]);
+                    const number = parseFloat(match[1]) * portionsCount;
                     const unit = match[2];
                     amountDiv.textContent = Math.round(number) + unit;
                 } else {
@@ -402,7 +409,6 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        peopleCount: 2,
                         excludedIngredients: excludedIngredients,
                         availableIngredients: availableIngredients,
                         mealType: mealType
@@ -523,7 +529,6 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        peopleCount: 2,
                         excludedIngredients: excludedIngredients,
                         availableIngredients: availableIngredients,
                         ingredients: ingredients,

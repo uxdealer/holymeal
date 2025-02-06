@@ -21,11 +21,8 @@ class PromptService:
             "тушение",
             "жарка на сковороде",
             "фритюр",
-            "су-вид",
             "вок",
-            "копчение",
             "маринование",
-            "фламбирование"
         ]
         
         self.world_cuisines = [
@@ -64,11 +61,7 @@ class PromptService:
         Returns:
             str: Сгенерированный промпт
         """
-        # Используем значение из конфигурации, если не указано явно
-        if people_count is None:
-            people_count = self.config.DEFAULT_PEOPLE_COUNT
-            
-        logger.debug(f"Генерация промпта для плана питания, {meal_type}, {people_count} порций")
+        logger.debug(f"Генерация промпта для плана питания, {meal_type}, 1 порция")
         
         # Формируем контекст для типа блюда
         meal_context = self._get_meal_type_context(meal_type)
@@ -78,7 +71,7 @@ class PromptService:
         available_str = self._format_available_ingredients(available_ingredients)
         
         # Формируем промпт для плана питания
-        prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на {people_count} человек.{meal_context}{excluded_str}{available_str}
+        prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на 1 порцию.{meal_context}{excluded_str}{available_str}
         
         Структура меню:
         - Пн-Чт:
@@ -135,11 +128,7 @@ class PromptService:
         Returns:
             str: Сгенерированный промпт
         """
-        # Используем значение из конфигурации, если не указано явно
-        if people_count is None:
-            people_count = self.config.DEFAULT_PEOPLE_COUNT
-            
-        logger.debug(f"Генерация промпта для отдельного блюда, {meal_type}, {people_count} порций")
+        logger.debug(f"Генерация промпта для отдельного блюда, {meal_type}, 1 порция")
         
         # Выбираем случайную технику приготовления и кухню
         suggested_technique = random.choice(self.cooking_techniques)
@@ -154,7 +143,7 @@ class PromptService:
         required_str = self._format_required_ingredients(required_ingredients)
         
         # Формируем промпт для отдельного блюда
-        prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на {people_count} человек, используя кухню: {suggested_cuisine} и технику приготовления: {suggested_technique}.{meal_context}{excluded_str}{available_str}{required_str}
+        prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на 1 порцию, используя кухню: {suggested_cuisine} и технику приготовления: {suggested_technique}.{meal_context}{excluded_str}{available_str}{required_str}
         
         КРИТИЧЕСКИ ВАЖНО: 
         - Создай АБСОЛЮТНО УНИКАЛЬНОЕ блюдо, которое не повторяет предыдущие рецепты

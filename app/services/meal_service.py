@@ -25,20 +25,18 @@ class MealService:
     
     def generate_meal_plan(
         self,
-        people_count: int,
         available_ingredients: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """
         Генерирует план питания
         
         Args:
-            people_count: Количество порций
             available_ingredients: Список доступных ингредиентов
             
         Returns:
             List[Dict[str, Any]]: Список рецептов
         """
-        logger.info(f"Генерация плана питания на {people_count} человек")
+        logger.info("Генерация плана питания")
         
         meals = []
         used_ingredients = []
@@ -46,7 +44,6 @@ class MealService:
         
         for meal_type in meal_types:
             prompt = self.prompt_service.generate_meal_plan_prompt(
-                people_count=people_count,
                 meal_type=meal_type,
                 excluded_ingredients=used_ingredients,
                 available_ingredients=available_ingredients
@@ -91,7 +88,6 @@ class MealService:
                     logger.debug(f"Блюдо {meal.name} похоже на существующее в истории")
                     # Генерируем новый промпт для следующей попытки
                     prompt = self.prompt_service.generate_meal_plan_prompt(
-                        people_count=people_count,
                         meal_type=meal_type,
                         excluded_ingredients=used_ingredients,
                         available_ingredients=available_ingredients
@@ -109,7 +105,6 @@ class MealService:
     
     def regenerate_meal(
         self,
-        people_count: int,
         meal_index: str,
         meal_type: str,
         excluded_ingredients: Optional[List[str]] = None,
@@ -120,7 +115,6 @@ class MealService:
         Регенерирует отдельный рецепт
         
         Args:
-            people_count: Количество порций
             meal_index: Индекс рецепта
             meal_type: Тип приема пищи
             excluded_ingredients: Исключаемые ингредиенты
@@ -144,7 +138,6 @@ class MealService:
             logger.debug(f"Попытка генерации {attempt + 1}/{max_attempts}")
             
             prompt = self.prompt_service.generate_single_meal_prompt(
-                people_count=people_count,
                 meal_type=meal_type,
                 excluded_ingredients=excluded_ingredients,
                 available_ingredients=available_ingredients,

@@ -16,7 +16,6 @@ def generate():
     Генерирует полный план питания с 6 уникальными рецептами
     
     Ожидает JSON:
-        - peopleCount: количество порций
         - availableIngredients: список доступных ингредиентов
     
     Returns:
@@ -24,13 +23,11 @@ def generate():
     """
     try:
         data = request.get_json()
-        people_count = int(data.get('peopleCount', 2))
         available_ingredients = data.get('availableIngredients', [])
         
-        logger.info(f"Запрос на генерацию плана питания на {people_count} человек")
+        logger.info("Запрос на генерацию плана питания")
         
         meals = meal_service.generate_meal_plan(
-            people_count=people_count,
             available_ingredients=available_ingredients
         )
         
@@ -48,7 +45,6 @@ def regenerate_meal():
     Регенерирует отдельный рецепт с учетом ограничений
     
     Ожидает JSON:
-        - peopleCount: количество порций
         - excludedIngredients: исключаемые ингредиенты
         - availableIngredients: доступные ингредиенты
         - requiredIngredients: обязательные ингредиенты
@@ -60,7 +56,6 @@ def regenerate_meal():
     """
     try:
         data = request.get_json()
-        people_count = int(data.get('peopleCount', 2))
         excluded_ingredients = data.get('excludedIngredients', [])
         available_ingredients = data.get('availableIngredients', [])
         required_ingredients = data.get('requiredIngredients', [])
@@ -70,7 +65,6 @@ def regenerate_meal():
         logger.info(f"Запрос на регенерацию рецепта {meal_index} типа {meal_type}")
         
         meal = meal_service.regenerate_meal(
-            people_count=people_count,
             meal_index=meal_index,
             meal_type=meal_type,
             excluded_ingredients=excluded_ingredients,
@@ -92,7 +86,6 @@ def update_meal():
     Обновляет существующий рецепт с новыми ингредиентами
     
     Ожидает JSON:
-        - peopleCount: количество порций
         - excludedIngredients: исключаемые ингредиенты
         - availableIngredients: доступные ингредиенты
         - ingredients: новый список обязательных ингредиентов
@@ -103,7 +96,6 @@ def update_meal():
     """
     try:
         data = request.get_json()
-        people_count = int(data.get('peopleCount', 2))
         excluded_ingredients = data.get('excludedIngredients', [])
         available_ingredients = data.get('availableIngredients', [])
         required_ingredients = data.get('ingredients', [])
@@ -112,7 +104,6 @@ def update_meal():
         logger.info(f"Запрос на обновление рецепта типа {meal_type}")
         
         meal = meal_service.regenerate_meal(
-            people_count=people_count,
             meal_index='update',
             meal_type=meal_type,
             excluded_ingredients=excluded_ingredients,
