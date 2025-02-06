@@ -1,0 +1,6 @@
+flask[async]==3.0.2
+anthropic==0.42.0
+python-dotenv==1.0.1
+aiohttp==3.9.3
+typing-extensions>=4.10.0
+python-json-logger==2.0.7

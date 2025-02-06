@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создатель меню</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Левая колонка с ингредиентами -->
+        <div class="left-column">
+            <h2>Пожелания</h2>
+            <button type="button" id="generateButton" onclick="generateMealPlan()" class="action-button">
+                <span class="material-icons">auto_fix_high</span>
+                <span class="button-text">Создать меню</span>
+            </button>
+            <div class="available-ingredients">
+                <div class="input-container">
+                    <input type="text" id="ingredientInput" placeholder="Введите ингредиент">
+                    <button onclick="addIngredient()" class="square-button">
+                        <span class="material-icons">add</span>
+                    </button>
+                </div>
+                <div id="ingredientsList" class="ingredients-list"></div>
+            </div>
+        </div>
+
+        <!-- Центральная колонка с рационами -->
+        <div class="center-column">
+            <h2>Меню</h2>
+
+            <div id="ration" class="tab-content empty-state" style="display: block;">
+                <div class="welcome-message">
+                    <h3>О даа, я хочу этот секс</h3>
+                    <p>Внесите пожелания и создайте меню</p>
+                </div>
+                <div class="meal-plan" style="display: none;">
+                    <!-- Пустая ячейка -->
+                    <div class="column-header"></div>
+                    <!-- Заголовки колонок -->
+                    <div class="column-header">• 1</div>
+                    <div class="column-header">• 2</div>
+                    
+                    <!-- Завтрак -->
+                    <div class="meal-row">
+                        <div class="meal-type-header">завтрак</div>
+                        <div id="weekday-breakfast"></div>
+                        <div id="weekend-breakfast"></div>
+                    </div>
+                    
+                    <!-- Обед -->
+                    <div class="meal-row">
+                        <div class="meal-type-header">обед</div>
+                        <div id="weekday-lunch"></div>
+                        <div id="weekend-lunch"></div>
+                    </div>
+                    
+                    <!-- Ужин -->
+                    <div class="meal-row">
+                        <div class="meal-type-header">ужин</div>
+                        <div id="weekday-dinner"></div>
+                        <div id="weekend-dinner"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая колонка со списком покупок -->
+        <div class="right-column">
+            <h2>Список</h2>
+            <button id="copyList" class="action-button">
+                <span class="material-icons">content_copy</span>
+                <span>Копировать</span>
+            </button>
+            <div id="shoppingList" class="shopping-list"></div>
+        </div>
+    </div>
+
+    <!-- Modal Window -->
+    <div class="recipe-modal" id="recipeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title"></h2>
+                <div class="modal-buttons">
+                    <button class="edit-button square-button" onclick="toggleEditMode()">
+                        <span class="material-icons">edit</span>
+                    </button>
+                    <button class="modal-close square-button" onclick="closeRecipeModal()">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="ingredients">
+                    <h5>Состав</h5>
+                    <div class="ingredients-grid"></div>
+                </div>
+                <div class="instructions">
+                    <h5>Приготовление</h5>
+                    <ol class="instructions-list"></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMealPlan = [];
+        let availableIngredients = [];
+        let currentEditingMeal = null;
+        let currentEditingElement = null;
+
+        function displayMealPlan(mealPlan) {
+            const rationDiv = document.getElementById('ration');
+            const mealPlanDiv = rationDiv.querySelector('.meal-plan');
+            const welcomeMessage = rationDiv.querySelector('.welcome-message');
+
+            if (!mealPlan || mealPlan.length === 0) {
+                mealPlanDiv.style.display = 'none';
+                welcomeMessage.style.display = 'block';
+                return;
+            }
+
+            welcomeMessage.style.display = 'none';
+            mealPlanDiv.style.display = 'grid';
+
+            // Очищаем все ячейки
+            ['breakfast', 'lunch', 'dinner'].forEach(type => {
+                document.getElementById(`weekday-${type}`).innerHTML = '';
+                document.getElementById(`weekend-${type}`).innerHTML = '';
+            });
+
+            // Распределяем блюда по ячейкам
+            mealPlan.forEach((meal, index) => {
+                const isWeekend = index >= 3;
+                const mealType = ['breakfast', 'lunch', 'dinner'][index % 3];
+                const containerId = `${isWeekend ? 'weekend' : 'weekday'}-${mealType}`;
+                const container = document.getElementById(containerId);
+                
+                if (container) {
+                    const mealElement = createMealElement(meal, index);
+                    container.appendChild(mealElement);
+                }
+            });
+        }
+
+        function createMealElement(meal, index) {
+            const mealDiv = document.createElement('div');
+            mealDiv.className = 'meal';
+            mealDiv.setAttribute('data-index', index);
+
+            mealDiv.innerHTML = `
+                <h4>${meal.name}</h4>
+                <div class="buttons-container">
+                    <button class="recipe-button" onclick="openRecipeModal(${JSON.stringify(meal).replace(/"/g, '&quot;')}, this.parentElement.parentElement)">
+                        <span class="material-icons">list_alt</span>
+                    </button>
+                    <button class="regen-button square-button" onclick="regenerateMeal(this.parentElement.parentElement, ${index})">
+                        <span class="material-icons">refresh</span>
+                        <div class="loading-spinner"></div>
+                    </button>
+                </div>
+            `;
+            return mealDiv;
+        }
+
+        function addIngredient() {
+            const input = document.getElementById('ingredientInput');
+            const ingredient = input.value.trim().toLowerCase();
+            
+            if (ingredient && !availableIngredients.includes(ingredient)) {
+                availableIngredients.push(ingredient);
+                updateIngredientsList();
+                input.value = '';
+                localStorage.setItem('availableIngredients', JSON.stringify(availableIngredients));
+            }
+        }
+
+        function removeIngredient(index) {
+            availableIngredients.splice(index, 1);
+            updateIngredientsList();
+            localStorage.setItem('availableIngredients', JSON.stringify(availableIngredients));
+        }
+
+        function updateIngredientsList() {
+            const list = document.getElementById('ingredientsList');
+            list.innerHTML = '';
+            
+            availableIngredients.forEach((ingredient, index) => {
+                const item = document.createElement('div');
+                item.className = 'ingredient-item';
+                item.innerHTML = `
+                    <span>${ingredient}</span>
+                    <button onclick="removeIngredient(${index})" class="square-button">
+                        <span class="material-icons">close</span>
+                    </button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function openRecipeModal(meal, mealElement = null) {
+            const modal = document.getElementById('recipeModal');
+            const title = modal.querySelector('.modal-title');
+            const ingredientsGrid = modal.querySelector('.ingredients-grid');
+            const instructionsList = modal.querySelector('.instructions ol');
+            currentEditingMeal = meal;
+            currentEditingElement = mealElement;
+
+            title.textContent = meal.name;
+            
+            ingredientsGrid.innerHTML = '';
+            instructionsList.innerHTML = '';
+
+            meal.ingredients.forEach(ing => {
+                const [name, amount] = ing.split(' - ').map(part => part.trim());
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'ingredient-name';
+                nameDiv.textContent = name;
+
+                const amountDiv = document.createElement('div');
+                amountDiv.className = 'ingredient-amount';
+                // Извлекаем число и единицу измерения
+                const match = amount.match(/^([\d.]+)(.*)$/);
+                if (match) {
+                    const number = parseFloat(match[1]);
+                    const unit = match[2];
+                    amountDiv.textContent = Math.round(number) + unit;
+                } else {
+                    amountDiv.textContent = amount || '';
+                }
+
+                const removeDiv = document.createElement('div');
+                removeDiv.innerHTML = `<button class="remove-ingredient square-button">
+                    <span class="material-icons">close</span>
+                </button>`;
+
+                ingredientsGrid.appendChild(nameDiv);
+                ingredientsGrid.appendChild(amountDiv);
+                ingredientsGrid.appendChild(removeDiv);
+            });
+
+            meal.instructions.forEach(step => {
+                const li = document.createElement('li');
+                li.textContent = step;
+                instructionsList.appendChild(li);
+            });
+
+            modal.classList.add('active');
+        }
+
+        function closeRecipeModal() {
+            const modal = document.getElementById('recipeModal');
+            modal.classList.remove('active');
+            currentEditingMeal = null;
+            currentEditingElement = null;
+            
+            const ingredientsGrid = modal.querySelector('.ingredients-grid');
+            if (ingredientsGrid.classList.contains('editing')) {
+                ingredientsGrid.classList.remove('editing');
+                const editButton = modal.querySelector('.edit-button');
+                editButton.querySelector('.material-icons').textContent = 'edit';
+            }
+        }
+
+        async function generateMealPlan() {
+            const button = document.getElementById('generateButton');
+            const buttonText = button.querySelector('.button-text');
+            const originalText = buttonText.textContent;
+            buttonText.textContent = 'Создаю...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mealsPerDay: 3,
+                        availableIngredients: availableIngredients
+                    })
+                });
+
+                const data = await response.json();
+                currentMealPlan = data.meal_plan;
+                localStorage.setItem('currentMealPlan', JSON.stringify(currentMealPlan));
+                displayMealPlan(currentMealPlan);
+                generateShoppingList(currentMealPlan);
+            } catch (error) {
+                console.error('Error generating meal plan:', error);
+            } finally {
+                buttonText.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function regenerateMeal(mealElement, mealIndex) {
+            const regenButton = mealElement.querySelector('.regen-button');
+            const icon = regenButton.querySelector('.material-icons');
+            const spinner = regenButton.querySelector('.loading-spinner');
+            icon.style.display = 'none';
+            spinner.style.display = 'block';
+            regenButton.disabled = true;
+
+            try {
+                const excludedIngredients = getAllCurrentIngredients(mealIndex);
+                const mealType = getMealTypeByIndex(mealIndex);
+                
+                const response = await fetch('/regenerate_meal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        peopleCount: 2,
+                        excludedIngredients: excludedIngredients,
+                        availableIngredients: availableIngredients,
+                        mealType: mealType
+                    })
+                });
+
+                const data = await response.json();
+                currentMealPlan[mealIndex] = data.meal;
+                localStorage.setItem('currentMealPlan', JSON.stringify(currentMealPlan));
+                displayMealPlan(currentMealPlan);
+                generateShoppingList(currentMealPlan);
+            } catch (error) {
+                console.error('Error regenerating meal:', error);
+            } finally {
+                const icon = regenButton.querySelector('.material-icons');
+                const spinner = regenButton.querySelector('.loading-spinner');
+                icon.style.display = 'block';
+                spinner.style.display = 'none';
+                regenButton.disabled = false;
+            }
+        }
+
+        function toggleEditMode() {
+            const modal = document.getElementById('recipeModal');
+            const ingredientsGrid = modal.querySelector('.ingredients-grid');
+            const editButton = modal.querySelector('.edit-button');
+            const isEditing = ingredientsGrid.classList.toggle('editing');
+            
+            if (isEditing) {
+                editButton.querySelector('.material-icons').textContent = 'check';
+                const ingredients = Array.from(ingredientsGrid.children);
+                for (let i = 0; i < ingredients.length; i += 3) {
+                    const nameDiv = ingredients[i];
+                    const amountDiv = ingredients[i + 1];
+                    const originalName = nameDiv.textContent;
+                    const originalAmount = amountDiv.textContent;
+
+                    nameDiv.innerHTML = `<input type="text" value="${originalName}" class="ingredient-edit">`;
+                    amountDiv.innerHTML = `<input type="text" value="${originalAmount}" class="ingredient-edit">`;
+                }
+                
+                const addButton = document.createElement('div');
+                addButton.className = 'add-ingredient-button';
+                addButton.setAttribute('colspan', '2');
+                addButton.innerHTML = '<span class="material-icons">add</span> Добавить ингредиент';
+                addButton.onclick = () => addNewIngredient(ingredientsGrid);
+                ingredientsGrid.appendChild(addButton);
+
+                ingredientsGrid.querySelectorAll('.remove-ingredient').forEach(button => {
+                    button.onclick = function() {
+                        const removeDiv = this.parentElement;
+                        const amountDiv = removeDiv.previousElementSibling;
+                        const nameDiv = amountDiv.previousElementSibling;
+                        nameDiv.remove();
+                        amountDiv.remove();
+                        removeDiv.remove();
+                    };
+                });
+            } else {
+                editButton.querySelector('.material-icons').textContent = 'edit';
+                const ingredients = [];
+                const inputs = ingredientsGrid.querySelectorAll('input');
+                for (let i = 0; i < inputs.length; i += 2) {
+                    const name = inputs[i].value.trim();
+                    const amount = inputs[i + 1].value.trim();
+                    if (name && amount) {
+                        ingredients.push(`${name} - ${amount}`);
+                    }
+                }
+
+                if (currentEditingElement) {
+                    const mealIndex = parseInt(currentEditingElement.getAttribute('data-index'));
+                    if (!isNaN(mealIndex)) {
+                        regenerateMealWithIngredients(currentEditingElement, mealIndex, ingredients);
+                    }
+                }
+            }
+        }
+
+        function addNewIngredient(ingredientsGrid) {
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'ingredient-name';
+            nameDiv.innerHTML = '<input type="text" placeholder="Ингредиент" class="ingredient-edit">';
+
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'ingredient-amount';
+            amountDiv.innerHTML = '<input type="text" placeholder="Количество" class="ingredient-edit">';
+
+            const removeDiv = document.createElement('div');
+            removeDiv.innerHTML = `<button class="remove-ingredient square-button">
+                <span class="material-icons">close</span>
+            </button>`;
+
+            const addButton = ingredientsGrid.querySelector('.add-ingredient-button');
+            ingredientsGrid.insertBefore(nameDiv, addButton);
+            ingredientsGrid.insertBefore(amountDiv, addButton);
+            ingredientsGrid.insertBefore(removeDiv, addButton);
+
+            removeDiv.querySelector('.remove-ingredient').onclick = function() {
+                nameDiv.remove();
+                amountDiv.remove();
+                removeDiv.remove();
+            };
+        }
+
+        async function regenerateMealWithIngredients(mealElement, mealIndex, ingredients) {
+            const modal = document.getElementById('recipeModal');
+            const editButton = modal.querySelector('.edit-button');
+            editButton.classList.add('loading');
+            editButton.disabled = true;
+
+            try {
+                const excludedIngredients = getAllCurrentIngredients(mealIndex);
+                const mealType = getMealTypeByIndex(mealIndex);
+                
+                const response = await fetch('/update_meal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        peopleCount: 2,
+                        excludedIngredients: excludedIngredients,
+                        availableIngredients: availableIngredients,
+                        ingredients: ingredients,
+                        mealType: mealType
+                    })
+                });
+
+                const data = await response.json();
+                currentMealPlan[mealIndex] = data.meal;
+                localStorage.setItem('currentMealPlan', JSON.stringify(currentMealPlan));
+                displayMealPlan(currentMealPlan);
+                generateShoppingList(currentMealPlan);
+                closeRecipeModal();
+                
+            } catch (error) {
+                console.error('Error updating meal:', error);
+                alert('Произошла ошибка при обновлении блюда. Пожалуйста, попробуйте еще раз.');
+            } finally {
+                editButton.classList.remove('loading');
+                editButton.disabled = false;
+            }
+        }
+
+        function getAllCurrentIngredients(excludeIndex) {
+            const allIngredients = [];
+            currentMealPlan.forEach((meal, index) => {
+                if (index !== excludeIndex && meal && meal.ingredients) {
+                    const mainIngredients = extractMainIngredients(meal.ingredients);
+                    allIngredients.push(...mainIngredients);
+                }
+            });
+            return [...new Set(allIngredients)];
+        }
+
+        function extractMainIngredients(ingredients) {
+            return ingredients
+                .map(ing => {
+                    const [name, amount] = ing.split(' - ').map(part => part.trim());
+                    const numericValue = amount.match(/\d+/);
+                    if (!numericValue) return null;
+                    
+                    const value = parseInt(numericValue[0]);
+                    const skipIngredients = ['соль', 'перец', 'масло', 'специи', 'приправа', 'зелень', 'чеснок', 'сахар'];
+                    if (skipIngredients.some(skip => name.toLowerCase().includes(skip)) || value <= 30) {
+                        return null;
+                    }
+                    return name.toLowerCase();
+                })
+                .filter(ing => ing !== null);
+        }
+
+        async function generateShoppingList(meals) {
+            try {
+                const response = await fetch('/generate_shopping_list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ meals: meals })
+                });
+
+                const data = await response.json();
+                displayShoppingList(data.shopping_list);
+            } catch (error) {
+                console.error('Error generating shopping list:', error);
+            }
+        }
+
+        function displayShoppingList(items) {
+            const shoppingListDiv = document.getElementById('shoppingList');
+            if (!items || items.length === 0) {
+                shoppingListDiv.innerHTML = '<p class="empty-message">Список покупок пуст</p>';
+                return;
+            }
+
+            const itemsList = document.createElement('ul');
+            itemsList.className = 'shopping-items';
+            
+            items.forEach(item => {
+                const li = document.createElement('li');
+                const [name, amount] = item.split(' - ').map(part => part.trim());
+                // Извлекаем число и единицу измерения
+                const match = amount ? amount.match(/^([\d.]+)(.*)$/) : null;
+                const formattedAmount = match ? Math.round(parseFloat(match[1])) + match[2] : amount || '';
+                li.innerHTML = `
+                    <span class="item-name">${name}</span>
+                    <span class="item-amount">${formattedAmount}</span>
+                `;
+                itemsList.appendChild(li);
+            });
+
+            shoppingListDiv.innerHTML = '';
+            shoppingListDiv.appendChild(itemsList);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const copyButton = document.getElementById('copyList');
+            const generateButton = document.getElementById('generateButton');
+
+            generateButton.addEventListener('click', generateMealPlan);
+
+            const savedIngredients = localStorage.getItem('availableIngredients');
+            if (savedIngredients) {
+                availableIngredients = JSON.parse(savedIngredients);
+                updateIngredientsList();
+            }
+
+            document.getElementById('ingredientInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addIngredient();
+                }
+            });
+
+            copyButton.addEventListener('click', async function() {
+                const shoppingList = document.querySelector('.shopping-items');
+                if (!shoppingList) return;
+
+                const items = Array.from(shoppingList.querySelectorAll('li'))
+                    .map(li => li.textContent)
+                    .join('\n');
+
+                try {
+                    await navigator.clipboard.writeText(items);
+                    copyButton.textContent = 'Скопировано!';
+                    setTimeout(() => {
+                        copyButton.textContent = 'Копировать список';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            });
+
+            const savedMealPlan = localStorage.getItem('currentMealPlan');
+            if (savedMealPlan) {
+                const parsedMealPlan = JSON.parse(savedMealPlan);
+                if (parsedMealPlan && parsedMealPlan.length > 0) {
+                    currentMealPlan = parsedMealPlan;
+                    displayMealPlan(currentMealPlan);
+                    generateShoppingList(currentMealPlan);
+                } else {
+                    displayMealPlan([]);
+                }
+            } else {
+                displayMealPlan([]);
+            }
+
+            document.getElementById('recipeModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeRecipeModal();
+                }
+            });
+        });
+
+        const MEAL_TYPES = {
+            0: 'breakfast',
+            1: 'lunch',
+            2: 'dinner'
+        };
+
+        function getMealTypeByIndex(index) {
+            return MEAL_TYPES[index % 3];
+        }
+    </script>
+</body>
+</html>

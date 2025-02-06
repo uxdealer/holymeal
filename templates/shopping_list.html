@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список Покупок - Mealgen</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Список Покупок</h1>
+        
+        <nav class="navigation">
+            <a href="/" class="nav-button">Вернуться к рациону</a>
+            <button id="toggleList" class="nav-button">Показать список</button>
+        </nav>
+
+        <div id="shoppingListContainer" class="shopping-list-container hidden">
+            <div class="shopping-list-header">
+                <button id="copyList" class="action-button">Копировать</button>
+                <button id="closeList" class="action-button">Закрыть</button>
+            </div>
+            <div id="shoppingList" class="shopping-list">
+                <p class="empty-message">Список покупок пока пуст. Сгенерируйте рацион и нажмите кнопку "Сформировать список покупок".</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleButton = document.getElementById('toggleList');
+            const listContainer = document.getElementById('shoppingListContainer');
+            const closeButton = document.getElementById('closeList');
+            const copyButton = document.getElementById('copyList');
+            
+            // Check if there's meal data in localStorage
+            const mealData = localStorage.getItem('currentMealPlan');
+            if (mealData) {
+                generateShoppingList(JSON.parse(mealData));
+            }
+
+            // Toggle list visibility
+            toggleButton.addEventListener('click', function() {
+                listContainer.classList.toggle('hidden');
+                toggleButton.textContent = listContainer.classList.contains('hidden') ? 'Показать список' : 'Скрыть список';
+            });
+
+            // Close button functionality
+            closeButton.addEventListener('click', function() {
+                listContainer.classList.add('hidden');
+                toggleButton.textContent = 'Показать список';
+            });
+
+            // Copy button functionality
+            copyButton.addEventListener('click', async function() {
+                const shoppingList = document.querySelector('.shopping-items');
+                if (!shoppingList) return;
+
+                const items = Array.from(shoppingList.querySelectorAll('li'))
+                    .map(li => li.textContent)
+                    .join('\n');
+
+                try {
+                    await navigator.clipboard.writeText(items);
+                    copyButton.textContent = 'Скопировано!';
+                    setTimeout(() => {
+                        copyButton.textContent = 'Копировать';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            });
+        });
+
+        async function generateShoppingList(meals) {
+            try {
+                const response = await fetch('/generate_shopping_list', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ meals: meals })
+                });
+
+                const data = await response.json();
+                displayShoppingList(data.shopping_list);
+            } catch (error) {
+                console.error('Error generating shopping list:', error);
+            }
+        }
+
+        function displayShoppingList(items) {
+            const shoppingListDiv = document.getElementById('shoppingList');
+            if (!items || items.length === 0) {
+                shoppingListDiv.innerHTML = '<p class="empty-message">Список покупок пуст</p>';
+                return;
+            }
+
+            const itemsList = document.createElement('ul');
+            itemsList.className = 'shopping-items';
+            
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                itemsList.appendChild(li);
+            });
+
+            shoppingListDiv.innerHTML = '';
+            shoppingListDiv.appendChild(itemsList);
+        }
+    </script>
+</body>
