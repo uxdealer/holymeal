@@ -108,6 +108,38 @@
     <script>
         let currentMealPlan = [];
         let availableIngredients = [];
+        const generatingPhrases = [
+            "Подбираю сезонные ингредиенты для вашего меню...",
+            "Сочетаю текстуры и ароматы...",
+            "Раскрываю потенциал каждого ингредиента...",
+            "Создаю гармонию вкусов...",
+            "Вдохновляюсь кухнями мира...",
+            "Экспериментирую с техниками приготовления...",
+            "Подчеркиваю натуральные вкусы продуктов...",
+            "Добавляю нотки свежих трав...",
+            "Балансирую насыщенность вкусов...",
+            "Выбираю идеальную степень прожарки...",
+            "Настраиваю температурные режимы...",
+            "Подготавливаю ароматные маринады...",
+            "Колдую над соусами...",
+            "Выстраиваю подачу блюд...",
+            "Пробую каждый компонент на вкус...",
+            "Подбираю идеальные гарниры...",
+            "Создаю кулинарную симфонию вкусов...",
+            "Раскрываю секреты специй...",
+            "Готовлю с любовью и вдохновением...",
+            "Выверяю время приготовления...",
+            "Подбираю идеальную нарезку...",
+            "Создаю текстурные контрасты...",
+            "Играю с цветовой палитрой блюд...",
+            "Добавляю финальные штрихи...",
+            "Соблюдаю кулинарные традиции...",
+            "Экспериментирую с подачей...",
+            "Создаю незабываемые вкусовые сочетания...",
+            "Подбираю правильную температуру подачи...",
+            "Работаю над ароматическим букетом...",
+            "Создаю кулинарные шедевры..."
+        ];
         let currentEditingMeal = null;
         let currentEditingElement = null;
 
@@ -264,12 +296,46 @@
             }
         }
 
+        function showGeneratingState() {
+            const rationDiv = document.getElementById('ration');
+            const welcomeMessage = rationDiv.querySelector('.welcome-message');
+            const mealPlanDiv = rationDiv.querySelector('.meal-plan');
+            
+            // Скрываем существующие элементы
+            welcomeMessage.style.display = 'none';
+            mealPlanDiv.style.display = 'none';
+            
+            // Создаем и показываем состояние генерации
+            const generatingDiv = document.createElement('div');
+            generatingDiv.className = 'generating-state';
+            generatingDiv.innerHTML = `<p>${generatingPhrases[0]}</p>`;
+            rationDiv.appendChild(generatingDiv);
+            
+            let currentPhraseIndex = 0;
+            
+            // Меняем фразы каждые 2 секунды
+            return setInterval(() => {
+                currentPhraseIndex = (currentPhraseIndex + 1) % generatingPhrases.length;
+                generatingDiv.innerHTML = `<p>${generatingPhrases[currentPhraseIndex]}</p>`;
+            }, 2000);
+        }
+
+        function hideGeneratingState() {
+            const rationDiv = document.getElementById('ration');
+            const generatingDiv = rationDiv.querySelector('.generating-state');
+            if (generatingDiv) {
+                generatingDiv.remove();
+            }
+        }
+
         async function generateMealPlan() {
             const button = document.getElementById('generateButton');
             const buttonText = button.querySelector('.button-text');
             const originalText = buttonText.textContent;
             buttonText.textContent = 'Создаю...';
             button.disabled = true;
+
+            const phrasesInterval = showGeneratingState();
 
             try {
                 const response = await fetch('/generate', {
@@ -291,6 +357,8 @@
             } catch (error) {
                 console.error('Error generating meal plan:', error);
             } finally {
+                clearInterval(phrasesInterval);
+                hideGeneratingState();
                 buttonText.textContent = originalText;
                 button.disabled = false;
             }
@@ -303,6 +371,8 @@
             icon.style.display = 'none';
             spinner.style.display = 'block';
             regenButton.disabled = true;
+
+            const phrasesInterval = showGeneratingState();
 
             try {
                 const excludedIngredients = getAllCurrentIngredients(mealIndex);
@@ -329,6 +399,8 @@
             } catch (error) {
                 console.error('Error regenerating meal:', error);
             } finally {
+                clearInterval(phrasesInterval);
+                hideGeneratingState();
                 const icon = regenButton.querySelector('.material-icons');
                 const spinner = regenButton.querySelector('.loading-spinner');
                 icon.style.display = 'block';

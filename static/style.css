@@ -564,7 +564,35 @@ button:hover .material-icons {
 }
 
 /* ======================================
-   12. Приветственное сообщение
+   12. Состояния загрузки
+====================================== */
+.generating-state {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 100%;
+    padding: 10px;
+    animation: fadeInOut 2s ease-in-out infinite;
+}
+
+.generating-state p {
+    font-size: 28px;
+    color: var(--color-text-body);
+    font-family: var(--font-accent);
+    margin: 0;
+    padding: 20px;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* ======================================
+   13. Приветственное сообщение
 ====================================== */
 .welcome-message {
     position: absolute;
