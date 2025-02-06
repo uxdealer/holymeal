@@ -136,7 +136,7 @@ class MealService:
         previous_meal = self.previous_meals.get(meal_index)
         
         # Пытаемся сгенерировать достаточно отличающийся рецепт
-        max_attempts = 2
+        max_attempts = 5  # Увеличено количество попыток для отдельной регенерации
         unique_meal_found = False
         last_valid_meal = None
         

@@ -296,35 +296,54 @@
             }
         }
 
-        function showGeneratingState() {
-            const rationDiv = document.getElementById('ration');
-            const welcomeMessage = rationDiv.querySelector('.welcome-message');
-            const mealPlanDiv = rationDiv.querySelector('.meal-plan');
+        function showGeneratingState(container = null) {
+            if (!container) {
+                const rationDiv = document.getElementById('ration');
+                const welcomeMessage = rationDiv.querySelector('.welcome-message');
+                const mealPlanDiv = rationDiv.querySelector('.meal-plan');
+                
+                welcomeMessage.style.display = 'none';
+                mealPlanDiv.style.display = 'none';
+                container = rationDiv;
+            }
             
-            // Скрываем существующие элементы
-            welcomeMessage.style.display = 'none';
-            mealPlanDiv.style.display = 'none';
-            
-            // Создаем и показываем состояние генерации
             const generatingDiv = document.createElement('div');
             generatingDiv.className = 'generating-state';
             generatingDiv.innerHTML = `<p>${generatingPhrases[0]}</p>`;
-            rationDiv.appendChild(generatingDiv);
+            container.appendChild(generatingDiv);
+            
+            if (container.classList.contains('meal')) {
+                container.classList.add('loading');
+            }
             
             let currentPhraseIndex = 0;
             
-            // Меняем фразы каждые 4 секунды
-            return setInterval(() => {
-                currentPhraseIndex = (currentPhraseIndex + 1) % generatingPhrases.length;
-                generatingDiv.innerHTML = `<p>${generatingPhrases[currentPhraseIndex]}</p>`;
-            }, 4000);
+            return {
+                interval: setInterval(() => {
+                    currentPhraseIndex = (currentPhraseIndex + 1) % generatingPhrases.length;
+                    generatingDiv.innerHTML = `<p>${generatingPhrases[currentPhraseIndex]}</p>`;
+                }, 4000),
+                element: generatingDiv
+            };
         }
 
-        function hideGeneratingState() {
-            const rationDiv = document.getElementById('ration');
-            const generatingDiv = rationDiv.querySelector('.generating-state');
-            if (generatingDiv) {
-                generatingDiv.remove();
+        function hideGeneratingState(container = null, state = null) {
+            if (state && state.interval) {
+                clearInterval(state.interval);
+            }
+            
+            if (state && state.element) {
+                state.element.remove();
+            } else {
+                const rationDiv = document.getElementById('ration');
+                const generatingDiv = rationDiv.querySelector('.generating-state');
+                if (generatingDiv) {
+                    generatingDiv.remove();
+                }
+            }
+            
+            if (container && container.classList.contains('meal')) {
+                container.classList.remove('loading');
             }
         }
 
@@ -335,7 +354,7 @@
             buttonText.textContent = 'Создаю...';
             button.disabled = true;
 
-            const phrasesInterval = showGeneratingState();
+            const loadingState = showGeneratingState();
 
             try {
                 const response = await fetch('/generate', {
@@ -357,8 +376,7 @@
             } catch (error) {
                 console.error('Error generating meal plan:', error);
             } finally {
-                clearInterval(phrasesInterval);
-                hideGeneratingState();
+                hideGeneratingState(null, loadingState);
                 buttonText.textContent = originalText;
                 button.disabled = false;
             }
@@ -372,7 +390,7 @@
             spinner.style.display = 'block';
             regenButton.disabled = true;
 
-            const phrasesInterval = showGeneratingState();
+            const loadingState = showGeneratingState(mealElement);
 
             try {
                 const excludedIngredients = getAllCurrentIngredients(mealIndex);
@@ -399,10 +417,7 @@
             } catch (error) {
                 console.error('Error regenerating meal:', error);
             } finally {
-                clearInterval(phrasesInterval);
-                hideGeneratingState();
-                const icon = regenButton.querySelector('.material-icons');
-                const spinner = regenButton.querySelector('.loading-spinner');
+                hideGeneratingState(mealElement, loadingState);
                 icon.style.display = 'block';
                 spinner.style.display = 'none';
                 regenButton.disabled = false;
