@@ -76,8 +76,7 @@ class Meal:
         Returns:
             List[str]: Список основных ингредиентов
         """
-        skip_ingredients = ['соль', 'перец', 'масло', 'специи', 'приправа', 
-                          'зелень', 'чеснок', 'сахар']
+        skip_ingredients = []
         
         main_ingredients = []
         for ing in self.ingredients:

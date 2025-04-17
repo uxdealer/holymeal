@@ -47,8 +47,7 @@ class ShoppingList:
             multiplier (int): Множитель количества
         """
         # Пропускаем специи и мелкие ингредиенты
-        skip_ingredients = ['соль', 'перец', 'масло', 'специи', 'приправа', 
-                          'зелень', 'чеснок', 'сахар']
+        skip_ingredients = []
         
         if any(skip in ingredient.name.lower() for skip in skip_ingredients):
             return

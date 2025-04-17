@@ -349,6 +349,9 @@ button:hover .material-icons {
 .input-container {
     display: flex;
     gap: var(--gap-size);
+    align-items: center;
+    height: var(--button-size);
+    width: 100%;
 }
 
 #ingredientInput {
@@ -595,6 +598,7 @@ button:hover .material-icons {
     top: 0;
     left: 0;
     right: 0;
+ 
     bottom: 0;
     backdrop-filter: blur(5px);
     z-index: 1;
