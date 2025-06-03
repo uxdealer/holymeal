@@ -40,7 +40,7 @@ class Config:
     # Настройки логирования
     LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     LOG_LEVEL = "INFO"
-    LOG_FILE = "logs/mealgen.log"
+    LOG_FILE = "logs/holymeal.log"
     LOG_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
     LOG_BACKUP_COUNT = 5
 
