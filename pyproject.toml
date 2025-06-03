@@ -7,8 +7,12 @@ requires-python = ">=3.11"
 dependencies = [
     "aiogram>=2.15",
     "aiohttp>=3.12.6",
+    "aiosqlite>=0.21.0",
+    "alembic>=1.16.1",
     "anthropic>=0.52.2",
     "flask[async]>=3.1.1",
+    "greenlet>=3.2.2",
     "python-dotenv>=1.1.0",
     "python-json-logger>=3.3.0",
+    "sqlalchemy>=2.0.41",
 ]
