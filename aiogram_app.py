@@ -9,13 +9,11 @@ from sqlalchemy.orm import joinedload
 from app.database.auth_token import AuthToken
 from app.database.db_session import async_sessionmaker
 from app.database.user import User
-from app.services.auth_service import AuthService
 from config.settings import get_config
 
 config = get_config()
 bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
 dp = Dispatcher(bot)
-auth_service = AuthService()
 
 
 @dp.message_handler(commands=["start"])
