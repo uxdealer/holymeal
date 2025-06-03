@@ -13,12 +13,15 @@ class Config:
     """Базовый класс конфигурации"""
 
     # Основные настройки приложения
-    APP_NAME = "MealGen"
+    APP_NAME = "holymeal"
     DEBUG = False
     TESTING = False
 
     # API ключи
     ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+    # TELEGRAM BOT TOKEN
+    TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
     # Настройки Claude
     CLAUDE_MODEL = "claude-3-5-sonnet-latest"
@@ -40,6 +43,25 @@ class Config:
     LOG_FILE = "logs/mealgen.log"
     LOG_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
     LOG_BACKUP_COUNT = 5
+
+    # Domain
+    DOMAIN = "127.0.0.1:5000"
+
+    @staticmethod
+    def get_async_sqlite_dsn_url_for_alembic() -> str:
+        return "sqlite+aiosqlite:///database.db"
+
+    @staticmethod
+    def get_async_sqlite_dsn_url() -> str:
+        return "sqlite+aiosqlite:///database.db"
+
+    @staticmethod
+    def get_sync_sqlite_dsn_url_for_alembic() -> str:
+        return "sqlite:///database.db"
+
+    @staticmethod
+    def get_sync_sqlite_dsn_url() -> str:
+        return "sqlite:///database.db"
 
 
 class DevelopmentConfig(Config):
