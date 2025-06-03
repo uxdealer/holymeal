@@ -1,17 +1,58 @@
 import asyncio
 
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message
 from aiogram.utils.exceptions import NetworkError
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
-API_TOKEN = "6201546479:AAHLpc8X_OvhXUhEUqCYs6hqaV1u8j23Ne0"
-bot = Bot(token=API_TOKEN)
+from app.database.auth_token import AuthToken
+from app.database.db_session import async_sessionmaker
+from app.database.user import User
+from app.services.auth_service import AuthService
+from config.settings import get_config
+
+config = get_config()
+bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
 dp = Dispatcher(bot)
+auth_service = AuthService()
 
 
 @dp.message_handler(commands=["start"])
 async def cmd_start(message: Message):
-    await message.answer("Привет! Я бот на aiogram.")
+    async with async_sessionmaker() as session:
+        stmt = (
+            select(User)
+            .options(joinedload(User.tokens))
+            .where(User.tg_id == message.chat.id)
+        )
+        user = (await session.execute(stmt)).scalar()
+
+        if user is None:
+            user = User(
+                tg_id=message.chat.id,
+                username=message.from_user.username or "",
+                first_name=message.from_user.first_name or "",
+                last_name=message.from_user.last_name or "",
+            )
+            session.add(user)
+            await session.commit()
+
+        auth_token = await AuthToken.generate_auth_token(session, user.id)
+
+        await message.answer(
+            text="Привет! Я бот на aiogram.",
+            reply_markup=types.InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        types.InlineKeyboardButton(
+                            text="Войти",
+                            url=f"{config.DOMAIN}/auth/{auth_token.token}",
+                        )  # type: ignore
+                    ]
+                ],
+            ),
+        )
 
 
 async def on_bot_shutdown():

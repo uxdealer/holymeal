@@ -3,6 +3,8 @@
 """
 
 from flask import Flask, render_template
+from app.decorators.auth import require_auth_token
+from app.routes.auth_router import auth_routes
 from app.routes.meal_routes import meal_routes
 from app.routes.shopping_routes import shopping_routes
 from app.utils.logger import setup_logger
@@ -25,11 +27,13 @@ def create_app():
     app.config.from_object(config)
 
     # Регистрируем маршруты
+    app.register_blueprint(auth_routes)
     app.register_blueprint(meal_routes)
     app.register_blueprint(shopping_routes)
 
     # Главная страница
     @app.route("/")
+    @require_auth_token()
     def index():
         """
         Отображает главную страницу приложения
