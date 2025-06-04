@@ -45,7 +45,7 @@ class Config:
     LOG_BACKUP_COUNT = 5
 
     # Domain
-    DOMAIN = "127.0.0.1:5000"
+    DOMAIN = "holymeal.xyz"
 
     @staticmethod
     def get_async_sqlite_dsn_url_for_alembic() -> str:

@@ -45,7 +45,7 @@ async def cmd_start(message: Message):
                     [
                         types.InlineKeyboardButton(
                             text="Войти",
-                            url=f"{config.DOMAIN}/auth/{auth_token.token}",
+                            url=f"https://{config.DOMAIN}/auth/{auth_token.token}",
                         )  # type: ignore
                     ]
                 ],
