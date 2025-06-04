@@ -1,6 +1,7 @@
 """
 Сервис для генерации промптов
 """
+
 from typing import List, Optional
 import random
 from config.settings import get_config
@@ -8,9 +9,10 @@ from app.utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+
 class PromptService:
     """Сервис для генерации промптов"""
-    
+
     def __init__(self):
         self.config = get_config()
         # Списки для разнообразия блюд
@@ -23,45 +25,44 @@ class PromptService:
             "вок",
             "маринование",
         ]
-        
+
         self.world_cuisines = [
             "итальянская",
-            "украинская"
-            "средиземноморская",
+            "украинскаясредиземноморская",
             "французская",
             "греческая",
             "испанская",
-            "ливанская"
+            "ливанская",
         ]
-    
+
     def generate_meal_plan_prompt(
         self,
         people_count: int = None,
         meal_type: Optional[str] = None,
         excluded_ingredients: Optional[List[str]] = None,
-        available_ingredients: Optional[List[str]] = None
+        available_ingredients: Optional[List[str]] = None,
     ) -> str:
         """
         Генерирует промпт для создания плана питания
-        
+
         Args:
             people_count: Количество порций (если не указано, берется из конфигурации)
             meal_type: Тип приема пищи (завтрак/обед/ужин)
             excluded_ingredients: Исключаемые ингредиенты
             available_ingredients: Доступные ингредиенты
-            
+
         Returns:
             str: Сгенерированный промпт
         """
         logger.debug(f"Генерация промпта для плана питания, {meal_type}, 1 порция")
-        
+
         # Формируем контекст для типа блюда
         meal_context = self._get_meal_type_context(meal_type)
-        
+
         # Формируем ограничения по ингредиентам
         excluded_str = self._format_excluded_ingredients(excluded_ingredients)
         available_str = self._format_available_ingredients(available_ingredients)
-        
+
         # Формируем промпт для плана питания
         prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на 1 порцию.{meal_context}{excluded_str}{available_str}
         
@@ -95,45 +96,45 @@ class PromptService:
         - Завтраки не должны быть сладкими
         
         {self._get_json_format_instructions()}"""
-        
+
         logger.debug("Промпт для плана питания сгенерирован успешно")
         return prompt
-        
+
     def generate_single_meal_prompt(
         self,
         people_count: int = None,
         meal_type: Optional[str] = None,
         excluded_ingredients: Optional[List[str]] = None,
         available_ingredients: Optional[List[str]] = None,
-        required_ingredients: Optional[List[str]] = None
+        required_ingredients: Optional[List[str]] = None,
     ) -> str:
         """
         Генерирует промпт для создания отдельного блюда
-        
+
         Args:
             people_count: Количество порций (если не указано, берется из конфигурации)
             meal_type: Тип приема пищи (завтрак/обед/ужин)
             excluded_ingredients: Исключаемые ингредиенты
             available_ingredients: Доступные ингредиенты
             required_ingredients: Обязательные ингредиенты
-            
+
         Returns:
             str: Сгенерированный промпт
         """
         logger.debug(f"Генерация промпта для отдельного блюда, {meal_type}, 1 порция")
-        
+
         # Выбираем случайную технику приготовления и кухню
         suggested_technique = random.choice(self.cooking_techniques)
         suggested_cuisine = random.choice(self.world_cuisines)
-        
+
         # Формируем контекст для типа блюда
         meal_context = self._get_meal_type_context(meal_type)
-        
+
         # Формируем ограничения по ингредиентам
         excluded_str = self._format_excluded_ingredients(excluded_ingredients)
         available_str = self._format_available_ingredients(available_ingredients)
         required_str = self._format_required_ingredients(required_ingredients)
-        
+
         # Формируем промпт для отдельного блюда
         prompt = f"""Ты опытный шеф-повар. Предложи рецепт блюда на 1 порцию, используя кухню: {suggested_cuisine} и технику приготовления: {suggested_technique}.{meal_context}{excluded_str}{available_str}{required_str}
         
@@ -154,22 +155,22 @@ class PromptService:
         
         
         Возможные техники приготовления:
-        {', '.join(self.cooking_techniques)}
+        {", ".join(self.cooking_techniques)}
         
         Кухни мира для вдохновения:
-        {', '.join(self.world_cuisines)}
+        {", ".join(self.world_cuisines)}
         
         {self._get_json_format_instructions()}"""
-        
+
         logger.debug("Промпт для отдельного блюда сгенерирован успешно")
         return prompt
-    
+
         # Используй следующие приемы для уникальности:
         # - Замени привычные ингредиенты на экзотические аналоги
         # - Добавь неожиданные, но сочетающиеся специи и приправы
         # - Примени интересные техники нарезки и подачи
         # - Используй сезонные и региональные продукты
-        
+
     def _get_json_format_instructions(self) -> str:
         """Возвращает инструкции по формату JSON"""
         return """В списке ингредиентов указывай количество в расчете на ОДНУ порцию! Указывай точное количество в граммах для каждого ингредиента (например: "морковь - 100г", "лук - 150г"). Для жидкостей используй миллилитры (например: "молоко - 200мл"). Специи указывай в граммах (например: "соль - 5г").
@@ -184,7 +185,7 @@ class PromptService:
         }
         
         Используй только этот формат, без дополнительного текста."""
-    
+
     def _get_meal_type_context(self, meal_type: Optional[str]) -> str:
         """Возвращает контекст для типа приема пищи"""
         if meal_type == "breakfast":
@@ -194,27 +195,28 @@ class PromptService:
         elif meal_type == "dinner":
             return "\nЭто блюдо для УЖИНА. Предложи легкое, но питательное блюдо, которое легко переварится. Без рыбы. Без мяса. Без маринованого."
         return ""
-    
+
     def _format_excluded_ingredients(self, ingredients: Optional[List[str]]) -> str:
         """Форматирует список исключаемых ингредиентов"""
         if not ingredients:
             return ""
         return f"\nНЕ ИСПОЛЬЗУЙ следующие ингредиенты: {', '.join(ingredients)}"
-    
+
     def _format_available_ingredients(self, ingredients: Optional[List[str]]) -> str:
         """Форматирует список доступных ингредиентов"""
         if not ingredients:
             return ""
         # Выбираем случайно 30-50% доступных ингредиентов
-        num_ingredients = max(1, random.randint(
-            len(ingredients) // 3,
-            len(ingredients) // 2
-        ))
+        num_ingredients = max(
+            1, random.randint(len(ingredients) // 3, len(ingredients) // 2)
+        )
         selected = random.sample(ingredients, num_ingredients)
         return f"\nПостарайся использовать некоторые из следующих ингредиентов: {', '.join(selected)}"
-    
+
     def _format_required_ingredients(self, ingredients: Optional[List[str]]) -> str:
         """Форматирует список обязательных ингредиентов"""
         if not ingredients:
             return ""
-        return f"\nОБЯЗАТЕЛЬНО используй следующие ингредиенты: {', '.join(ingredients)}"
+        return (
+            f"\nОБЯЗАТЕЛЬНО используй следующие ингредиенты: {', '.join(ingredients)}"
+        )
